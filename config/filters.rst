@@ -13,9 +13,9 @@ or priority or both. A selector consists of two fields separated by a
 period (``.``), facility on the left and priority on the right.
 
 .. productionlist::
-   facility: "auth" | "authpriv" | "cron" | "daemon" | "kern" | "lpr"
-           : "mail" | "mark" | "news" | "security" | "syslog"
-           : "user" | "uucp" | "ftp" | "audit"
+   facility: "auth" | "authpriv" | "cron" | "daemon" | "kern"
+           : "lpr" | "mail" | "mark" | "news" | "security"
+           : "syslog" | "user" | "uucp" | "ftp" | "audit"
            : "local" `digit_octal`
            : `digit`? `digit`
    priority: "alert" | "crit" | "debug" | "emerg" | "err" | "error"
@@ -23,6 +23,7 @@ period (``.``), facility on the left and priority on the right.
            : "warning" | "*"
    selector: facility ( "," facility )* "." "!"? "="? priority
            : selector ";" selector
+   stmt_selector: selector `space`* `block`
 
 
 Facility
@@ -150,3 +151,60 @@ selector to match was an exclusion (priority ``none`` or starting with
      auth.emerg;,,authpriv.emerg
      auth.emerg;,,,;,,,;authpriv.emerg
      auth.emerg;authpriv.emerg;
+
+
+
+
+Property Filters
+================
+
+Rsyslog adds another type of simple filter which can match on any message
+property, not just the facility and priority. Property-based filters are
+less efficient that BSD-style selectors but marginally more efficient than full
+conditional expressions. They compare a provided static value with the value of
+a selected message property using any of several comparison operations.
+
+.. productionlist::
+   propfilter_op: "isempty" | "isequal" | "contains" | "startswith"
+                : "regex" | "ereregex"
+   propfilter: ":" `property` "," `space`* "!"? propfilter_op "," `space`* `string`
+   stmt_propfilter: propfilter `space`* `block`
+
+A property filter consists of a colon followed by a property name, then a comma,
+optional space, a comparison operation, another comma and space, and finally a
+quoted string. Property names are case-sensitive, so ``msg`` works while ``MSG``
+will cause an error. A full list of built-in properties can be found in the
+section on properties.
+
+The supported comparison operations are listed below. In addition, an
+exclamation point (``!``) can be added to the beginning of any operation name to
+negate its meaning.
+
++----------------+-------------------------------------------------------------+
+| Keyword        | Operation                                                   |
++================+=============================================================+
+| ``isempty``    | Checks if the property is empty, which means either it      |
+|                | hasn't been set or has been set to the empty string.        |
++----------------+-------------------------------------------------------------+
+| ``isequal``    | Checks whether the given value exactly matches the          |
+|                | property's value.                                           |
++----------------+-------------------------------------------------------------+
+| ``contains``   | Checks whether the given value exactly matches a substring  |
+|                | of the property's value at any location.                    |
++----------------+-------------------------------------------------------------+
+| ``startswith`` | Checks whether the given value exactly matches a substring  |
+|                | of the property's value starting at the first character.    |
++----------------+-------------------------------------------------------------+
+| ``regex``      | Interprets the given value as a POSIX Basic Regular         |
+|                | Expression and checks whether it matches the property.      |
++----------------+-------------------------------------------------------------+
+| ``ereregex``   | Interprets the given value as a POSIX Extended Regular      |
+|                | Expression and checks whether it matches the property.      |
++----------------+-------------------------------------------------------------+
+
+The value is a quoted string, but it follows different rules than strings in
+most other parts of the configuration file. It supports only very limited
+escapes: ``\\`` will produce a backslash (``\``) and ``\"`` will produce a
+double quote (``"``). All other escape sequences (backslash followed by any
+character) are reserved for future use and behave in an undefined manner. Any
+backslash not intended as part of an escape sequence must therefore be escaped.
