@@ -12,6 +12,18 @@ filters; they are, in fact, the most efficient way to filter on facility
 or priority or both. A selector consists of two fields separated by a
 period (``.``), facility on the left and priority on the right.
 
+.. productionlist::
+   facility: "auth" | "authpriv" | "cron" | "daemon" | "kern" | "lpr"
+           : "mail" | "mark" | "news" | "security" | "syslog"
+           : "user" | "uucp" | "ftp" | "audit"
+           : "local" `digit_octal`
+           : `digit`? `digit`
+   priority: "alert" | "crit" | "debug" | "emerg" | "err" | "error"
+           : "info" | "none" | "notice" | "panic" | "warn"
+           : "warning" | "*"
+   selector: facility ( "," facility )* "." "!"? "="? priority
+           : selector ";" selector
+
 
 Facility
 --------
@@ -27,6 +39,25 @@ asterisk (``*``) is used in the facility field the selector will match any
 facility. Also, if the same priority filter should apply to multiple
 facilities (but not all of them), a list of facility names separated with
 commas (``,``) may be provided in place of a single facility specification.
+
+.. note::
+
+   When handling the special ``*`` facility, the parser only checks that the
+   first character of the given facility is ``*``. Any characters after that
+   are ignored. That means these selectors are equivalent and all perfectly
+   valid::
+
+     *.emerg
+     *foo.emerg
+     ****.emerg
+
+   After handling a facility value the parser skips any number of commas
+   that are present. That means these selectors are equivalent and all
+   perfectly valid::
+
+     auth,authpriv.emerg
+     auth,,,,authpriv.emerg
+     auth,authpriv,.emerg
 
 The valid facility names are:
 
@@ -101,7 +132,21 @@ Compound Selectors
 ------------------
 
 Compound selectors can be created by joining together selectors with
-semicolons (``;``). The selectors are applied from left to right and the
-last result for a given message applies. If any selector matched, the message
+semicolons (``;``). The sub-selectors are applied from left to right and
+only the last action applied for each combination of facility and priority
+takes effect. For any given message, if any sub-selector matched the message
 will be considered to have matched the compound selector, unless the last
-selector to match was an exclusion (priority ``none`` or starting with ``!``).
+selector to match was an exclusion (priority ``none`` or starting with
+``!``, but not ``!none``).
+
+.. note::
+
+   After encountering the semicolon which ends a sub-selector the parser
+   will skip any number of commas or semicolons that are present. That means
+   all these compound selectors are equivalent and perfectly valid::
+
+     auth.emerg;authpriv.emerg
+     auth.emerg;;authpriv.emerg
+     auth.emerg;,,authpriv.emerg
+     auth.emerg;,,,;,,,;authpriv.emerg
+     auth.emerg;authpriv.emerg;
