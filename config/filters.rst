@@ -2,6 +2,43 @@
 Filter Conditions
 *****************
 
+
+
+
+Conditional Expressions
+=======================
+
+Rsyslog supports a fairly standard system of conditional expressions which are
+documented in the section on :ref:`expressions`. They can be used with the
+``if`` statement for conditional execution.
+
+.. productionlist::
+   stmt_if: "if" `expression` "then" `block` ( "else" `block` )?
+
+.. tip::
+   Conditional expressions are powerful, but evaluating them can be costly.
+   Since the BSD-style selectors discussed below operate using bitmasks instead
+   of string comparison they're `much` faster and should be used when possible,
+   i.e. when operating only on the facility or priority (or both).
+
+A conditional statement takes either of these forms::
+
+    if <expression> then <block>
+    if <expression> then <block> else <block>
+
+Where ``<expression>`` is a conditional expression as documented in the
+:ref:`expressions` section and ``<block>`` is either a single statement or a
+collection of statements wrapped in curly braces (``{}``). For example::
+
+    if $programname == 'prog1' then {
+        action(type="omfile" file="/var/log/prog1.log")
+        if $msg contains 'test' then
+            action(type="omfile" file="/var/log/prog1test.log")
+        else
+            action(type="omfile" file="/var/log/prog1notest.log")
+    }
+
+
 BSD Selectors
 =============
 
@@ -23,7 +60,7 @@ period (``.``), facility on the left and priority on the right.
            : "warning" | "*"
    selector: facility ( "," facility )* "." "!"? "="? priority
            : selector ";" selector
-   stmt_selector: selector `space`* `block`
+   stmt_selector: selector `block`
 
 
 Facility
@@ -159,16 +196,22 @@ Property Filters
 ================
 
 Rsyslog adds another type of simple filter which can match on any message
-property, not just the facility and priority. Property-based filters are
-less efficient that BSD-style selectors but marginally more efficient than full
-conditional expressions. They compare a provided static value with the value of
-a selected message property using any of several comparison operations.
+property, not just the facility and priority. They compare a provided static
+value with the value of a selected message property using any of several
+comparison operations.
 
 .. productionlist::
    propfilter_op: "isempty" | "isequal" | "contains" | "startswith"
                 : "regex" | "ereregex"
-   propfilter: ":" `property` "," `space`* "!"? propfilter_op "," `space`* `string`
-   stmt_propfilter: propfilter `space`* `block`
+   propfilter_string: '"' ( `character` - ( '"' | '\' ) | '\' ( '"' | '\' ) )* '"'
+   propfilter: ":" `property` "," `space`* "!"? propfilter_op "," `space`* propfilter_string
+   stmt_propfilter: propfilter `block`
+
+.. warning::
+   Property filters were added to Rsyslog before support for full conditional
+   expressions was introduced. While they're not quite deprecated they're less
+   flexible and no more efficient than conditional expressions, which should
+   therefore generally be used instead when writing new configurations.
 
 A property filter consists of a colon followed by a property name, then a comma,
 optional space, a comparison operation, another comma and space, and finally a
