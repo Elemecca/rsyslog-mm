@@ -47,7 +47,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Rsyslog Missing Manual'
-copyright = u'2016, Sam Hanes'
+copyright = u'2016 Sam Hanes'
 author = u'Sam Hanes'
 
 # The version info for the project you're documenting, acts as replacement for
