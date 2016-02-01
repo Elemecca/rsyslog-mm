@@ -3,4 +3,4 @@ Configuration
 
 .. toctree::
    
-   filters
+   conditionals

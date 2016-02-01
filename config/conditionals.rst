@@ -1,9 +1,25 @@
-*****************
-Filter Conditions
-*****************
+.. _conditionals:
 
+************
+Conditionals
+************
 
+Rsyslog supports three kinds of conditional logic: the ``if`` statement,
+classic BSD facility/priority selectors, and property filters. All three are
+statements that control the execution of a block, so they can be used at any
+point in the configuration -- including within another conditional -- and are
+interchangeable. For example::
 
+    if $fromhost == 'host1' then {
+        mail.* action(type="omfile" file="/var/log/host1/mail.log")
+        *.err /var/log/host1/errlog
+    } else {
+        mail.* action(type="omfile" file="/var/log/mail.log")
+        *.err /var/log/errlog
+    }
+
+.. productionlist::
+   stmt_conditional: `stmt_if` | `stmt_selector` | `stmt_propfilter`
 
 Conditional Expressions
 =======================
