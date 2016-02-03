@@ -7,7 +7,7 @@ Conditionals
 Rsyslog supports three kinds of conditional logic: the ``if`` statement,
 classic BSD facility/priority selectors, and property filters. All three are
 statements that control the execution of a block, so they can be used at any
-point in the configuration -- including within another conditional -- and are
+point in the configuration --- including within another conditional --- and are
 interchangeable. For example::
 
     if $fromhost == 'host1' then {
@@ -35,7 +35,7 @@ documented in the section on :ref:`expressions`. They can be used with the
    Conditional expressions are powerful, but evaluating them can be costly.
    Since the BSD-style selectors discussed below operate using bitmasks instead
    of string comparison they're `much` faster and should be used when possible,
-   i.e. when operating only on the facility or priority (or both).
+   i.e. when operating only on the facility or priority.
 
 A conditional statement takes either of these forms::
 
