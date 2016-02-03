@@ -31,12 +31,28 @@ comments are permitted.
    comment: comment_block | comment_line
    cws: ( whitespace | comment )*
 
+.. _literals:
+
 Literals
 --------
+
+A :dfn:`literal` is a representation of a fixed value included directly in
+the configuration file. It will be converted to an in-memory representation and
+used directly in the operation where it appears.
 
 Number Literals
 ^^^^^^^^^^^^^^^
 
+Literal numbers can be specified in decimal (base 10), octal (base 8), or
+hexadecimal (base 16). Decimal is the default; start the literal with ``0``
+for octal or ``0x`` for hexadecimal. Only positive integers and zero are
+supported. Negative numbers and fractional parts cannot be used.
+
+.. tip::
+
+   Since a leading zero is used to indicate octal literals, zero-padding
+   decimal literals will cause issues. If you want to right-align number
+   literals you should use space-padding instead.
 
 .. warning::
 
@@ -61,16 +77,55 @@ String Literals
 
 RainerScript supports string literals wrapped in either single (``'``) or double
 (``"``) quote characters. Both styles of string are identical except for their
-quote character. In order to represent characters that aren't otherwise
-permissible in the configuration file, escape sequences starting with a
-backslash (``\``) are supported. 
+quote character.
+
+.. warning::
+
+   For reasons that aren't clear dollar signs (``$``) must be escaped in
+   double-quoted strings in expressions. This does not apply to single-quoted
+   strings or strings used in objects.
 
 .. productionlist::
-   str_escape_octal : "\" 3 * `digit_oct`
-   str_escape_hex   : "\x", 2 * `digit_hex`
-   str_escape_char  : "\" ( '"' | "'" | "\" | "$" | "b" | "n" | "t" | "r" )
-   str_escape       : str_escape_char | str_escape_hex | str_escape_octal
+   str_escape_octal : "\" `digit_oct`{3}
+   str_escape_hex   : "\x" `digit_hex`{2}
+   str_escape_char  : "\" `character`
+   str_escape       : str_escape_octal | str_escape_hex | str_escape_char
    string_single    : "'" ( `character` - ( "'" | "\"       ) | str_escape )* "'"
    string_double    : '"' ( `character` - ( '"' | "\" | "$" ) | str_escape )* '"'
    string           : string_single | string_double
 
+
+Escape sequences are supported in order to represent characters that aren't
+otherwise permissible. A backslash (``\``) followed by three octal digits will
+be interpreted as an octal number and replaced by the ASCII character encoded by
+that number.  Likewise, ``\x`` followed by two hexadecimal digits will be
+interpreted as a hexadecimal number and replaced by the corresponding ASCII
+character. A backslash followed by any other character is a character escape.
+The list of supported character escapes can be found in the following table. Any
+character escape not currently supported is reserved for future use and has
+undefined behavior.
+
+.. warning::
+
+   Parser support for character escape sequences is variable. This does not
+   appear to be intentional. Check the notes in the following table to make sure
+   the escape you want to use is available in the appropriate context.
+
+============  ========  =====
+Sequence      ASCII     Value
+============  ========  =====
+``\\``        ``0x5C``  Backslash
+``\"``        ``0x22``  Double Quote
+``\'``        ``0x27``  Single Quote
+``\$`` [#o]_  ``0x24``  Dollar Sign
+``\?``        ``0x3F``  Question Mark
+``\a`` [#e]_  ``0x07``  Terminal Bell
+``\b``        ``0x08``  Backspace
+``\f`` [#e]_  ``0x0C``  Form Feed
+``\n``        ``0x0A``  Line Feed
+``\r``        ``0x0D``  Carriage Return
+``\t``        ``0x09``  Horizontal Tab
+============  ========  =====
+
+.. [#e] not supported within :ref:`expressions`
+.. [#o] not supported within :ref:`objects`
